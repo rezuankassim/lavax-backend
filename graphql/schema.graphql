@@ -1,0 +1,229 @@
+"A datetime and timezone string in ISO 8601 format `Y-m-dTH:i:sP`, e.g. `2020-04-20T13:53:12+02:00`."
+scalar DateTime
+  @scalar(class: "Nuwave\\Lighthouse\\Schema\\Types\\Scalars\\DateTimeTz")
+
+"Indicates what fields are available at the top level of a query operation."
+type Query {
+  "Find me."
+  me: User @guard(with: "sanctum") @auth
+
+  "Find a single user by an identifying attribute."
+  user(
+    "Search by primary key."
+    id: ID @eq @rules(apply: ["prohibits:email", "required_without:email"])
+
+    "Search by email address."
+    email: String
+      @eq
+      @rules(apply: ["prohibits:id", "required_without:id", "email"])
+  ): User @find
+
+  "List multiple users."
+  users(
+    "Filters by name. Accepts SQL LIKE wildcards `%` and `_`."
+    name: String @where(operator: "like")
+  ): [User!]! @paginate(defaultCount: 10)
+
+  "List multiple products."
+  products(
+    "Filters by title. Accepts SQL LIKE wildcards `%` and `_`."
+    title: String @where(operator: "like")
+
+    "Orders by created_at, title."
+    orderBy: _ @orderBy(colummns: ["created_at", "title"])
+  ): [Product!]! @paginate(defaultCount: 10)
+
+  "Find a single product by identifying attribute."
+  product("Search by slug." slug: String @eq): Product @find
+
+  "Find a single cart by identifying attribute."
+  cart(
+    "Search by user_id."
+    user_id: ID @eq
+
+    "Status."
+    status: Int @eq
+  ): Cart @find
+
+  "List multiple orders by user_id."
+  orders(
+    "User ID."
+    user_id: ID @eq
+
+    "Orders by created_at"
+    orderBy: _ @orderBy(colummns: ["created_at"])
+  ): [Order!]! @paginate(defaultCount: 10)
+}
+
+type Mutation {
+  createCart(input: CreateCartInput! @spread): Cart
+    @guard(with: "sanctum")
+    @create
+
+  updateCart(input: UpdateCartInput! @spread): Cart
+    @guard(with: "sanctum")
+    @update
+
+  createOrder(input: CreateOrderInput! @spread): Order @create
+}
+
+"Account of a person who utilizes this application."
+type User {
+  "Unique primary key."
+  id: ID!
+
+  "Non-unique name."
+  name: String!
+
+  "Unique email address."
+  email: String!
+
+  "When the email was verified."
+  email_verified_at: DateTime
+
+  "When the account was created."
+  created_at: DateTime!
+
+  "When the account was last updated."
+  updated_at: DateTime!
+}
+
+"Products"
+type Product {
+  "Unique primary key."
+  id: ID!
+
+  "Unique slug."
+  slug: String!
+
+  "Unique title."
+  title: String!
+
+  "Non-unique description."
+  description: String!
+
+  "Photo file name."
+  photo: String!
+
+  "Photo full url."
+  photoUrl: String!
+
+  "Non-unique price."
+  price: Float!
+
+  "Stripe price Id."
+  stripe_price_id: String!
+
+  "When the product was created."
+  created_at: DateTime!
+
+  "When the product was last updated."
+  updated_at: DateTime!
+
+  carts: [Cart!] @belongsToMany
+
+  pivot: CartProductPivot
+}
+
+type CartProductPivot {
+  quantity: Int
+}
+
+"Carts"
+type Cart {
+  "Unique primary key."
+  id: ID!
+
+  "Status."
+  status: Int!
+
+  "User ID."
+  user_id: ID!
+
+  user: User! @belongsTo
+
+  products: [Product!] @belongsToMany
+
+  "When the cart was created."
+  created_at: DateTime!
+
+  "When the cart was last updated."
+  updated_at: DateTime!
+
+  pivot: CartProductPivot
+}
+
+"Orders"
+type Order {
+  "Unique primary key."
+  id: ID!
+
+  "Unique uuid."
+  uuid: String!
+
+  "User ID."
+  user_id: ID!
+
+  "User."
+  user: User! @belongsTo
+
+  "Cart ID."
+  cart_id: ID!
+
+  "Cart."
+  cart: Cart! @belongsTo
+
+  "When the order was created."
+  created_at: DateTime!
+
+  "When the order was last updated."
+  updated_at: DateTime!
+}
+
+input CreateCartInput {
+  "User ID."
+  user_id: ID!
+
+  "Products."
+  products: BelongsToManyProducts
+}
+
+input UpdateCartInput {
+  "Cart ID."
+  id: ID!
+
+  "Products."
+  products: BelongsToManyProducts
+}
+
+input BelongsToManyProducts {
+  connect: [ConnectProduct!]
+  update: [ConnectProduct!]
+  syncWithoutDetaching: [ConnectProduct!]
+  disconnect: [ID!]
+}
+
+input ConnectProduct {
+  id: ID!
+  quantity: Int
+}
+
+input CreateOrderInput {
+  "User ID."
+  user_id: ID!
+
+  "Cart ID."
+  cart_id: ID!
+
+  "Carts."
+  cart: BelongsToCart
+}
+
+input BelongsToCart {
+  update: UpdateCartStatus!
+}
+
+input UpdateCartStatus {
+  id: ID!
+  status: Int!
+}
