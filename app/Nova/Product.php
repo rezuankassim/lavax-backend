@@ -65,6 +65,9 @@ class Product extends Resource
                 ->alwaysShow()
                 ->hideFromIndex(),
 
+            Text::make('Stripe Price ID', 'stripe_price_id')
+                ->rules('required', 'max:255'),
+
             Image::make('Photo')
                 ->creationRules('required')
                 ->updateRules('nullable')
