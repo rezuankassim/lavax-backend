@@ -5,7 +5,7 @@ scalar DateTime
 "Indicates what fields are available at the top level of a query operation."
 type Query {
   "Find me."
-  me: User @guard(with: "sanctum") @auth
+  me: User @guard @auth
 
   "Find a single user by an identifying attribute."
   user(
@@ -56,13 +56,9 @@ type Query {
 }
 
 type Mutation {
-  createCart(input: CreateCartInput! @spread): Cart
-    @guard(with: "sanctum")
-    @create
+  createCart(input: CreateCartInput! @spread): Cart @guard @create
 
-  updateCart(input: UpdateCartInput! @spread): Cart
-    @guard(with: "sanctum")
-    @update
+  updateCart(input: UpdateCartInput! @spread): Cart @guard @update
 
   createOrder(input: CreateOrderInput! @spread): Order @create
 }
