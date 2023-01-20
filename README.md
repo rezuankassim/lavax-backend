@@ -130,9 +130,20 @@ This is an example of how to list things you need to use the software and how to
    ```
 
 4. Serve the application
+
    ```sh
    php artisan serve
    ```
+
+5. Migration and create Nova user
+
+   ```sh
+   php artisan migrate
+   ...
+   php artisan nova:user
+   ```
+
+6. Login to Nova with credentials created `/nova/login`
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
